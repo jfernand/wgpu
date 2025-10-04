@@ -7,13 +7,13 @@ use winit::event_loop::ActiveEventLoop;
 use winit::keyboard::{PhysicalKey};
 use winit::window::Window;
 
-pub struct App {
+pub struct App<'a> {
     #[cfg(target_arch = "wasm32")]
     proxy: Option<winit::event_loop::EventLoopProxy<State>>,
-    state: Option<State>,
+    state: Option<State<'a>>,
 }
 
-impl App {
+impl App<'_> {
     pub fn new(#[cfg(target_arch = "wasm32")] event_loop: &EventLoop<State>) -> Self {
         #[cfg(target_arch = "wasm32")]
         let proxy = Some(event_loop.create_proxy());
@@ -24,7 +24,7 @@ impl App {
         }
     }
 }
-impl ApplicationHandler<State> for App {
+impl<'a> ApplicationHandler<State<'static>> for App<'a> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         #[allow(unused_mut)]
         let mut window_attributes = Window::default_attributes();
@@ -47,7 +47,7 @@ impl ApplicationHandler<State> for App {
 
         #[cfg(not(target_arch = "wasm32"))]
         {
-            // If we are not on web we can use pollster to
+            // If we are not on web, we can use pollster to
             // await the
             self.state = Some(pollster::block_on(State::new(window)).unwrap());
         }
@@ -73,7 +73,7 @@ impl ApplicationHandler<State> for App {
     }
 
     #[allow(unused_mut)]
-    fn user_event(&mut self, _event_loop: &ActiveEventLoop, mut event: State) {
+    fn user_event(&mut self, _event_loop: &ActiveEventLoop, mut event: State<'static>) {
         // This is where proxy.send_event() ends up
         #[cfg(target_arch = "wasm32")]
         {
