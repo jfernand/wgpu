@@ -1,11 +1,11 @@
 use crate::state::gpu::init_gpu;
+use crate::vertices::VERTICES;
 use std::sync::Arc;
 use wgpu::Surface;
 use wgpu::util::DeviceExt;
 use winit::event_loop::ActiveEventLoop;
 use winit::keyboard::KeyCode;
 use winit::window::Window;
-use crate::VERTICES;
 
 mod device;
 mod gpu;
@@ -17,6 +17,7 @@ pub struct State<'a> {
     config: wgpu::SurfaceConfiguration,
     device: wgpu::Device,
     is_surface_configured: bool,
+    num_vertices: usize,
     queue: wgpu::Queue,
     render_pipeline: wgpu::RenderPipeline,
     surface: Surface<'a>,
@@ -32,13 +33,11 @@ impl<'a> State<'a> {
         let (device, queue) = device::request_device(&adapter).await?;
         let render_pipeline = pipeline::make_pipeline(&device, config.format);
 
-        let vertex_buffer = device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(VERTICES),
-                usage: wgpu::BufferUsages::VERTEX,
-            }
-        );
+        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Vertex Buffer"),
+            contents: bytemuck::cast_slice(VERTICES),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
         Ok(Self {
             color: wgpu::Color {
                 r: 0.1,
@@ -49,6 +48,7 @@ impl<'a> State<'a> {
             config,
             device,
             is_surface_configured: false,
+            num_vertices: VERTICES.len(),
             queue,
             render_pipeline,
             surface,
@@ -73,8 +73,14 @@ impl<'a> State<'a> {
         if !self.is_surface_configured {
             return Ok(());
         }
-
-        let (output, encoder) = render_pass::render_pass(&self.surface, &self.device, &self.render_pipeline, self.color)?;
+        let (output, encoder) = render_pass::render_pass(
+            &self.surface,
+            &self.device,
+            &self.render_pipeline,
+            self.vertex_buffer.slice(..),
+            self.num_vertices as u32,
+            self.color,
+        )?;
 
         // submit will accept anything that implements IntoIter
         self.queue.submit(std::iter::once(encoder.finish()));

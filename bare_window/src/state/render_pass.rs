@@ -1,9 +1,11 @@
-use wgpu::{Color, CommandEncoder, Device, RenderPipeline, Surface, SurfaceError, SurfaceTexture};
+use wgpu::{BufferSlice, Color, CommandEncoder, Device, RenderPipeline, Surface, SurfaceError, SurfaceTexture};
 
 pub(crate) fn render_pass(
     surface: &Surface,
     device: &Device,
     pipeline: &RenderPipeline,
+    buffer: BufferSlice,
+    num_vertices: u32,
     color: Color,
 ) -> Result<(SurfaceTexture, CommandEncoder), SurfaceError> {
     let output = surface.get_current_texture()?;
@@ -36,8 +38,9 @@ pub(crate) fn render_pass(
         occlusion_query_set: None,
         timestamp_writes: None,
     });
-    render_pass.set_pipeline(&pipeline);
-    render_pass.draw(0..3, 0..1);
+    render_pass.set_pipeline(pipeline);
+    render_pass.set_vertex_buffer(0, buffer);
+    render_pass.draw(0..num_vertices, 0..1);
     drop(render_pass);
     Ok((output, encoder))
 }

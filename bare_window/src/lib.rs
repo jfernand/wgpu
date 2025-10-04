@@ -1,14 +1,12 @@
 use bytemuck::{Pod, Zeroable};
-use winit::{
-    event_loop::{EventLoop},
-};
+use winit::event_loop::EventLoop;
 
+use crate::app::App;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
-use crate::app::App;
 
-mod state;
 mod app;
+mod state;
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen(start)]
@@ -39,16 +37,49 @@ pub fn run() -> anyhow::Result<()> {
     Ok(())
 }
 
-// lib.rs
-#[repr(C)]
-#[derive(Copy, Clone, Debug, Pod, Zeroable)]
-struct Vertex {
-    position: [f32; 3],
-    color: [f32; 3],
-}
+mod vertices {
+    use bytemuck::{Pod, Zeroable};
 
-const VERTICES: &[Vertex] = &[
-    Vertex { position: [0.0, 0.5, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [-0.5, -0.5, 0.0], color: [0.0, 1.0, 0.0] },
-    Vertex { position: [0.5, -0.5, 0.0], color: [0.0, 0.0, 1.0] },
-];
+    #[repr(C)]
+    #[derive(Copy, Clone, Debug, Pod, Zeroable)]
+    pub struct Vertex {
+        position: [f32; 3],
+        color: [f32; 3],
+    }
+
+    pub const VERTICES: &[Vertex] = &[
+        Vertex {
+            position: [0.0, 0.5, 0.0],
+            color: [1.0, 0.0, 0.0],
+        },
+        Vertex {
+            position: [-0.5, -0.5, 0.0],
+            color: [0.0, 1.0, 0.0],
+        },
+        Vertex {
+            position: [0.5, -0.5, 0.0],
+            color: [0.0, 0.0, 1.0],
+        },
+    ];
+
+    impl Vertex {
+        pub fn desc() -> wgpu::VertexBufferLayout<'static> {
+            wgpu::VertexBufferLayout {
+                array_stride: size_of::<Vertex>() as wgpu::BufferAddress,
+                step_mode: wgpu::VertexStepMode::Vertex,
+                attributes: &[
+                    wgpu::VertexAttribute {
+                        offset: 0,
+                        shader_location: 0,
+                        format: wgpu::VertexFormat::Float32x3,
+                    },
+                    wgpu::VertexAttribute {
+                        offset: size_of::<[f32; 3]>() as wgpu::BufferAddress,
+                        shader_location: 1,
+                        format: wgpu::VertexFormat::Float32x3,
+                    },
+                ],
+            }
+        }
+    }
+}

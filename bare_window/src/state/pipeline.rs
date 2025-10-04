@@ -1,4 +1,5 @@
 use wgpu::TextureFormat;
+use crate::vertices::Vertex;
 
 pub(crate) fn make_pipeline(
     device: &wgpu::Device,
@@ -16,9 +17,10 @@ pub(crate) fn make_pipeline(
         layout: Some(&render_pipeline_layout),
         vertex: wgpu::VertexState {
             module: &shader,
-            entry_point: Some("vs_main"), // 1.
-            buffers: &[],                 // 2.
-            compilation_options: wgpu::PipelineCompilationOptions::default(),
+            entry_point: Some("vs_main"),
+            buffers: &[
+                Vertex::desc(),
+            ],            compilation_options: wgpu::PipelineCompilationOptions::default(),
         },
         fragment: Some(wgpu::FragmentState {
             // 3.
