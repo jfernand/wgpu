@@ -1,5 +1,5 @@
 use crate::state::gpu::init_gpu;
-use crate::vertices::VERTICES;
+use crate::primitives::triangle::VERTICES;
 use std::sync::Arc;
 use wgpu::Surface;
 use wgpu::util::DeviceExt;
