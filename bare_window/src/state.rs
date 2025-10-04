@@ -6,6 +6,8 @@ use wgpu::util::DeviceExt;
 use winit::event_loop::ActiveEventLoop;
 use winit::keyboard::KeyCode;
 use winit::window::Window;
+use crate::primitives::Primitive;
+use crate::primitives::triangle::Triangle;
 
 mod device;
 mod gpu;
@@ -31,11 +33,12 @@ impl<'a> State<'a> {
     pub async fn new(window: Arc<Window>) -> anyhow::Result<State<'a>> {
         let (surface, adapter, config) = init_gpu(window.clone())?;
         let (device, queue) = device::request_device(&adapter).await?;
+        let tri = Triangle::new(VERTICES);
         let render_pipeline = pipeline::make_pipeline(&device, config.format);
 
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
-            contents: bytemuck::cast_slice(VERTICES),
+            contents: bytemuck::cast_slice(tri.vertices),
             usage: wgpu::BufferUsages::VERTEX,
         });
         Ok(Self {
@@ -48,7 +51,7 @@ impl<'a> State<'a> {
             config,
             device,
             is_surface_configured: false,
-            num_vertices: VERTICES.len(),
+            num_vertices: tri.len(),
             queue,
             render_pipeline,
             surface,
