@@ -9,6 +9,8 @@ pub struct State {
     is_surface_configured: bool,
     queue: wgpu::Queue,
     surface: wgpu::Surface<'static>,
+    size: winit::dpi::PhysicalSize<u32>,
+    color: wgpu::Color,
     pub(crate) window: Arc<Window>,
 }
 
@@ -79,8 +81,15 @@ impl State {
             device,
             is_surface_configured: false,
             queue,
-            window,
+            size,
             surface,
+            window,
+            color: wgpu::Color {
+                r: 0.1,
+                g: 0.2,
+                b: 0.3,
+                a: 1.0,
+            }
         })
     }
     pub fn resize(&mut self, width: u32, height: u32) {
@@ -126,12 +135,7 @@ impl State {
                     depth_slice: None,
                     resolve_target: None,
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.1,
-                            g: 0.2,
-                            b: 0.3,
-                            a: 1.0,
-                        }),
+                        load: wgpu::LoadOp::Clear(self.color),
                         store: wgpu::StoreOp::Store,
                     },
                 })],
@@ -152,5 +156,15 @@ impl State {
         if let (KeyCode::Escape, true) = (code, is_pressed) {
             event_loop.exit()
         }
+    }
+
+    pub fn handle_cursor(&mut self, x: f64, y: f64) {
+        self.color = wgpu::Color {
+            r: x / (self.size.width as f64),
+            g: y / (self.size.height as f64),
+            b: 0.3,
+            a: 1.0,
+        };
+        println!("Cursor: ({}, {})", x, y);
     }
 }
